@@ -19,11 +19,14 @@ export interface InstallPrompt {
 
 function matchStandalone(): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia?.("(display-mode: standalone)").matches ||
-    // iOS Safari exposes installed state here instead of via display-mode.
-    (navigator as unknown as { standalone?: boolean }).standalone === true
+  // An installed launch runs in one of the app display modes. We request
+  // `fullscreen` (falling back to `standalone`), so check the whole family
+  // rather than just `standalone`.
+  const asApp = ["fullscreen", "standalone", "minimal-ui"].some(
+    (mode) => window.matchMedia?.(`(display-mode: ${mode})`).matches,
   );
+  // iOS Safari exposes installed state here instead of via display-mode.
+  return asApp || (navigator as unknown as { standalone?: boolean }).standalone === true;
 }
 
 function detectIOS(): boolean {
