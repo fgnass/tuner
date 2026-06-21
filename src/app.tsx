@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { Header } from "./components/Header";
+import { InstallBanner } from "./components/InstallBanner";
 import { StringPicker } from "./components/StringPicker";
 import { TunerDisplay } from "./components/TunerDisplay";
 import { useInstallPrompt } from "./hooks/useInstallPrompt";
@@ -9,6 +10,16 @@ import { type Note, octaveFoldedCents, TargetTracker, type Tuning, tuningNotes }
 
 const IN_TUNE_ENTER = 3; // within this many cents counts as perfectly in tune
 const IN_TUNE_LEAVE = 6; // must drift past this to drop back out (hysteresis)
+
+const INSTALL_DISMISSED_KEY = "tuner:install-dismissed";
+
+function readInstallDismissed(): boolean {
+  try {
+    return localStorage.getItem(INSTALL_DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function App() {
   const [instrument, setInstrument] = useState<Instrument>(DEFAULT_INSTRUMENT);
@@ -25,6 +36,26 @@ export function App() {
   );
   const inTuneRef = useRef(false);
   const trackerRef = useRef(new TargetTracker());
+
+  // Track which strings have reached "in tune" this session; once every string
+  // has, offer to install the app (a far better moment than the cold start).
+  const tunedRef = useRef<Set<number>>(new Set());
+  const [allTuned, setAllTuned] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(readInstallDismissed);
+
+  const resetTuningProgress = () => {
+    tunedRef.current = new Set();
+    setAllTuned(false);
+  };
+
+  const dismissInstall = () => {
+    setInstallDismissed(true);
+    try {
+      localStorage.setItem(INSTALL_DISMISSED_KEY, "1");
+    } catch {
+      // Private mode / blocked storage — just dismiss for this session.
+    }
+  };
 
   const hasSignal = reading.freq > 0;
 
@@ -53,17 +84,27 @@ export function App() {
     cents !== null && Math.abs(cents) <= (inTuneRef.current ? IN_TUNE_LEAVE : IN_TUNE_ENTER);
   inTuneRef.current = inTune;
 
+  useEffect(() => {
+    if (instrument.chromatic || !inTune || activeIndex < 0 || notes.length === 0) return;
+    const tuned = tunedRef.current;
+    if (tuned.has(activeIndex)) return;
+    tuned.add(activeIndex);
+    if (tuned.size >= notes.length) setAllTuned(true);
+  }, [inTune, activeIndex, instrument.chromatic, notes.length]);
+
   const onChangeInstrument = (i: Instrument) => {
     setInstrument(i);
     setTuning(i.tunings[0] ?? tuning);
     setManualIndex(0);
     trackerRef.current.reset();
+    resetTuningProgress();
   };
 
   const onChangeTuning = (t: Tuning) => {
     setTuning(t);
     if (manualIndex >= t.strings.length) setManualIndex(0);
     trackerRef.current.reset();
+    resetTuningProgress();
   };
 
   if (status !== "listening") {
@@ -125,6 +166,17 @@ export function App() {
           onSelect={setManualIndex}
         />
       )}
+      {allTuned &&
+        !install.isStandalone &&
+        !installDismissed &&
+        (install.canInstall || install.isIOS) && (
+          <InstallBanner
+            isIOS={install.isIOS}
+            canInstall={install.canInstall}
+            onInstall={install.promptInstall}
+            onDismiss={dismissInstall}
+          />
+        )}
     </main>
   );
 }

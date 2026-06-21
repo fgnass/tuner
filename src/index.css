@@ -498,3 +498,75 @@ body {
   font-size: 0.55em;
   font-weight: 400;
 }
+
+/* ---- Install banner (shown once every string is tuned) ---- */
+.install-banner {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: max(env(safe-area-inset-bottom), 16px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(58, 39, 56, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(250, 174, 123, 0.25);
+  border-radius: 16px;
+  z-index: 20;
+  animation: banner-up 0.35s ease-out;
+}
+@keyframes banner-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.install-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+.install-banner-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+.install-banner-text {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--dim);
+  line-height: 1.4;
+}
+.install-banner-btn {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bg-deep);
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.install-banner-close {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
