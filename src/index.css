@@ -102,6 +102,26 @@ body {
   opacity: 0.6;
 }
 
+.install-btn {
+  padding: 11px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: none;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.install-hint {
+  color: var(--dim);
+  font-weight: 300;
+  font-size: 14px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
 /* ---- Header ---- */
 .header {
   display: flex;

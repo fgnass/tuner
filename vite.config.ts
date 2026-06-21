@@ -22,7 +22,10 @@ export default defineConfig({
         description: "A free, full-screen instrument tuner.",
         theme_color: "#473144",
         background_color: "#473144",
-        display: "standalone",
+        // Prefer the most immersive mode; browsers that don't support it fall
+        // back down the chain (fullscreen → standalone → minimal-ui → browser).
+        display: "fullscreen",
+        display_override: ["fullscreen", "standalone"],
         orientation: "portrait",
         start_url: "/",
       },

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "preact/hooks";
 import { Header } from "./components/Header";
 import { StringPicker } from "./components/StringPicker";
 import { TunerDisplay } from "./components/TunerDisplay";
+import { useInstallPrompt } from "./hooks/useInstallPrompt";
 import { usePitch } from "./hooks/usePitch";
 import { DEFAULT_INSTRUMENT, type Instrument } from "./lib/instruments";
 import { type Note, octaveFoldedCents, TargetTracker, type Tuning, tuningNotes } from "./lib/notes";
@@ -16,6 +17,7 @@ export function App() {
   const [manualIndex, setManualIndex] = useState(0);
 
   const { status, reading, start, stop } = usePitch(instrument.range);
+  const install = useInstallPrompt();
 
   const notes = useMemo(
     () => (instrument.chromatic ? [] : tuningNotes(tuning)),
@@ -85,6 +87,14 @@ export function App() {
             >
               {status === "requesting" ? "Starting…" : "Start tuning"}
             </button>
+            {install.canInstall && (
+              <button type="button" class="install-btn" onClick={install.promptInstall}>
+                Install app
+              </button>
+            )}
+            {!install.canInstall && install.isIOS && !install.isStandalone && (
+              <p class="install-hint">Install: tap the Share button, then “Add to Home Screen”.</p>
+            )}
           </>
         )}
       </main>
