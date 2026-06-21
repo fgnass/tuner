@@ -1,0 +1,480 @@
+/* Self-hosted Oswald variable font (wght 200–700) from public/oswald.woff.
+   One file covers every weight the UI uses (300–700). */
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url("/oswald.woff") format("woff");
+}
+
+:root {
+  --bg: #473144;
+  --bg-deep: #3a2738;
+  --panel: #523a50;
+  --grid: rgba(250, 174, 123, 0.05);
+  --text: #f6ece6;
+  --dim: #a78f9d;
+  /* Peach is "good": accent + locked-in. Coral is "off / far". */
+  --accent: #faae7b;
+  --off: #ef6f5c;
+  font-family:
+    "Oswald", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Form controls don't inherit font-family by default — force Oswald everywhere. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app {
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  /* Cap to a phone-like column and center, so a cent maps to the same number
+     of pixels on a wide desktop as on mobile. */
+  max-width: 460px;
+  margin-inline: auto;
+  padding: max(env(safe-area-inset-top), 16px) 20px max(env(safe-area-inset-bottom), 20px);
+  overflow: hidden;
+}
+
+/* ---- Start screen ---- */
+.app.start {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.logo-mark {
+  width: 160px;
+  height: auto;
+}
+
+.hint {
+  color: var(--dim);
+  font-weight: 300;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.start-btn {
+  margin-top: 8px;
+  padding: 15px 36px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg-deep);
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.start-btn:disabled {
+  opacity: 0.6;
+}
+
+/* ---- Header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.auto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+}
+.stop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+}
+.stop-btn svg {
+  width: 22px;
+  height: 22px;
+}
+.auto-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+.switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #5b4257;
+  transition: background 0.2s;
+}
+.switch.on {
+  background: var(--accent);
+}
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.switch.on .knob {
+  transform: translateX(20px);
+}
+
+/* ---- Instrument + tuning selectors ---- */
+.header-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.instrument-trigger,
+.tuning-trigger {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.chevron {
+  font-size: 20px;
+  color: var(--dim);
+}
+.instrument-name {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+.tuning-name {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+}
+.tuning-trigger .chevron {
+  font-size: 15px;
+}
+
+/* ---- Tuning sheet ---- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  z-index: 10;
+}
+.sheet {
+  width: 100%;
+  background: rgba(58, 39, 56, 0.82);
+  backdrop-filter: blur(20px);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 12px max(env(safe-area-inset-bottom), 16px);
+  max-height: 70dvh;
+  overflow-y: auto;
+}
+.sheet-title {
+  text-align: center;
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 0;
+}
+.sheet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.sheet-item.active {
+  background: rgba(250, 174, 123, 0.14);
+  color: var(--accent);
+}
+.sheet-strings {
+  color: var(--dim);
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+/* ---- Tuner display ---- */
+.display {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 8px;
+}
+.display canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* In-tune target axis; turns peach and "grows out" on lock-in. */
+.centerline {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(246, 236, 230, 0.08);
+  transform-origin: center;
+  transition: background 0.2s;
+}
+.centerline.lit {
+  background: var(--accent);
+  box-shadow: 0 0 22px rgba(250, 174, 123, 0.75);
+  animation: line-grow 0.4s ease-out;
+}
+@keyframes line-grow {
+  from {
+    transform: translateX(-50%) scaleY(0);
+  }
+  to {
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+.accidental {
+  position: absolute;
+  top: 20px;
+  font-size: 32px;
+  color: var(--dim);
+  pointer-events: none;
+}
+.accidental.flat {
+  left: 2px;
+}
+.accidental.sharp {
+  right: 2px;
+}
+
+/* ---- Needle: a floating Oswald readout above a pen nib that rides the
+   trail head. No enclosing ring — the number is the indicator. ---- */
+.needle {
+  position: absolute;
+  top: 33%; /* aligns with the trail head (TOP_FRAC) */
+  left: 50%;
+  transform: translate(-50%, -100%); /* nib bottom sits on the trail head */
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--accent); /* live colour set per-frame to match the trail */
+  transition: opacity 0.15s;
+}
+.needle-num {
+  font-size: 46px;
+  font-weight: 500;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+.needle-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+/* The pen nib — a teardrop tip touching the rolling paper. */
+.needle-nib {
+  display: block;
+  margin-top: 8px;
+  width: 24px;
+  height: auto;
+  color: inherit;
+  transition: filter 0.2s;
+}
+.needle.intune .needle-nib {
+  filter: drop-shadow(0 0 8px rgba(250, 174, 123, 0.85));
+}
+
+/* ---- Tune-in moment: bloom ring + warm field flash ---- */
+.bloom {
+  position: absolute;
+  left: 50%;
+  top: 33%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 1;
+  animation: bloom 0.65s ease-out forwards;
+}
+@keyframes bloom {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(9);
+    opacity: 0;
+  }
+}
+.tune-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 28%, rgba(250, 174, 123, 0.22), transparent 62%);
+  pointer-events: none;
+  z-index: 1;
+  animation: tune-flash 0.7s ease-out forwards;
+}
+@keyframes tune-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- Target note, sitting on the center line ---- */
+.note-circle {
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  transform: translate(-50%, -50%);
+  width: 78px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg);
+  border: 1.5px solid #5e4459;
+  border-radius: 50%;
+  z-index: 2;
+}
+.note-circle.in-tune {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: note-pop 0.4s ease-out;
+}
+@keyframes note-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1.14);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.note-circle sup {
+  font-size: 0.5em;
+  font-weight: 500;
+  margin-left: 1px;
+}
+
+/* ---- String picker ---- */
+.strings {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+.string-btn {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--dim);
+  background: none;
+  border: 1.5px solid #5a4156;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+}
+.string-btn:disabled {
+  cursor: default;
+}
+.string-btn.active {
+  color: var(--text);
+  border-color: var(--text);
+}
+.string-btn.active.in-tune {
+  color: var(--bg-deep);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.string-btn sup {
+  font-size: 0.55em;
+  font-weight: 400;
+}

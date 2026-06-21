@@ -1,0 +1,40 @@
+{
+  "name": "tuner",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A free, full-screen instrument tuner that runs entirely in your browser.",
+  "license": "MIT",
+  "author": "Felix Gnass",
+  "homepage": "https://tuner.gnass.buzz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fgnass/tuner.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "generate-pwa-assets": "pwa-assets-generator",
+    "lint": "biome check",
+    "format": "biome check --write",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "preact": "^10.24.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "@preact/preset-vite": "^2.9.1",
+    "@types/node": "^22.20.0",
+    "@vite-pwa/assets-generator": "^0.2.6",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.1",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^4.1.9"
+  }
+}
