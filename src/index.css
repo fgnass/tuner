@@ -122,6 +122,21 @@ body {
   line-height: 1.5;
 }
 
+.feedback-link {
+  /* Pin to the bottom while the rest stays vertically centered. */
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 300;
+  text-decoration: none;
+}
+.feedback-link:hover {
+  color: var(--accent);
+}
+
 /* ---- Header ---- */
 .header {
   display: flex;
