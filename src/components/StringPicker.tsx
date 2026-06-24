@@ -1,4 +1,5 @@
 import type { Note } from "../lib/notes";
+import { StringButton } from "./StringButton";
 
 interface Props {
   notes: Note[];
@@ -15,20 +16,16 @@ export function StringPicker({ notes, activeIndex, interactive, inTune, onSelect
     <div class="strings">
       {notes.map((note, i) => {
         const isActive = i === activeIndex;
-        const cls = ["string-btn", isActive ? "active" : "", isActive && inTune ? "in-tune" : ""]
-          .filter(Boolean)
-          .join(" ");
         return (
-          <button
-            type="button"
+          <StringButton
             key={i}
-            class={cls}
+            state={isActive && inTune ? "tuned" : isActive ? "active" : "idle"}
             disabled={!interactive}
             onClick={() => interactive && onSelect(i)}
           >
             {note.name}
             <sup>{note.octave}</sup>
-          </button>
+          </StringButton>
         );
       })}
     </div>

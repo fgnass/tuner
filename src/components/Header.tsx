@@ -1,7 +1,18 @@
+import { styled } from "classname-variants/preact";
 import type { Instrument } from "../lib/instruments";
 import type { Tuning } from "../lib/notes";
+import { Button, SwitchTrack } from "../ui/Button";
 import { InstrumentSelector } from "./InstrumentSelector";
 import { TuningSelector } from "./TuningSelector";
+
+const AutoSwitchButton = styled(Button, {
+  base: "button-auto",
+  defaultProps: {
+    intent: "ghost",
+    size: "bare",
+    type: "button",
+  },
+});
 
 interface Props {
   instrument: Instrument;
@@ -33,25 +44,23 @@ export function Header({
       </div>
       <div class="header-actions">
         {!instrument.chromatic && (
-          <button
-            type="button"
-            class="auto-toggle"
+          <AutoSwitchButton
             role="switch"
             aria-checked={auto}
             aria-label="Auto string detection"
             onClick={onToggleAuto}
           >
             <span class="auto-label">AUTO</span>
-            <span class={auto ? "switch on" : "switch"}>
+            <SwitchTrack checked={auto}>
               <span class="knob" />
-            </span>
-          </button>
+            </SwitchTrack>
+          </AutoSwitchButton>
         )}
-        <button type="button" class="stop-btn" aria-label="Stop tuning" onClick={onStop}>
+        <Button intent="ghost" size="icon" aria-label="Stop tuning" onClick={onStop}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
           </svg>
-        </button>
+        </Button>
       </div>
     </header>
   );

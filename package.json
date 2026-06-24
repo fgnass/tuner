@@ -25,6 +25,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@preact/signals": "^2.9.2",
+    "classname-variants": "^1.7.1",
     "preact": "^10.24.3"
   },
   "devDependencies": {

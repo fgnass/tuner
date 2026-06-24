@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useSignal } from "@preact/signals";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { OneEuroFilter } from "../lib/oneEuro";
 import { createPitchDetector } from "../lib/pitch";
 
@@ -59,8 +60,8 @@ export interface PitchRange {
  *   filter band, which hardens octave decisions and rejects out-of-range noise.
  */
 export function usePitch(range: PitchRange) {
-  const [status, setStatus] = useState<MicStatus>("idle");
-  const [reading, setReading] = useState<Reading>(NO_READING);
+  const status = useSignal<MicStatus>("idle");
+  const reading = useSignal<Reading>(NO_READING);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -105,18 +106,18 @@ export function usePitch(range: PitchRange) {
     recentCentsRef.current.length = 0;
     smoothedRef.current = -1;
     lastFilterAtRef.current = 0;
-    setReading(NO_READING);
-    setStatus("idle");
+    reading.value = NO_READING;
+    status.value = "idle";
   }, []);
 
   const start = useCallback(async () => {
     if (ctxRef.current) return;
     // getUserMedia is only exposed in a secure context (HTTPS or localhost).
     if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus("error");
+      status.value = "error";
       return;
     }
-    setStatus("requesting");
+    status.value = "requesting";
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -147,7 +148,7 @@ export function usePitch(range: PitchRange) {
       lowpassRef.current = lowpass;
 
       const buffer = new Float32Array(analyser.fftSize);
-      setStatus("listening");
+      status.value = "listening";
 
       const loop = () => {
         const now = performance.now();
@@ -193,12 +194,12 @@ export function usePitch(range: PitchRange) {
             const smoothedCents = filterRef.current.filter(1200 * Math.log2(f), dt);
             smoothedRef.current = 2 ** (smoothedCents / 1200);
             lastGoodAtRef.current = now;
-            setReading({ freq: smoothedRef.current });
+            reading.value = { freq: smoothedRef.current };
           } else if (now - lastGoodAtRef.current > HOLD_MS) {
             filterRef.current.reset();
             smoothedRef.current = -1;
             lastFilterAtRef.current = 0;
-            setReading(NO_READING);
+            reading.value = NO_READING;
           }
           // Otherwise (low confidence within the hold window): keep the last
           // reading so the trace stays put through attacks and brief dropouts.
@@ -211,13 +212,13 @@ export function usePitch(range: PitchRange) {
       // granted) can leave the mic track live — release everything.
       stop();
       const denied = err instanceof DOMException && err.name === "NotAllowedError";
-      setStatus(denied ? "denied" : "error");
+      status.value = denied ? "denied" : "error";
     }
   }, [stop]);
 
   useEffect(() => () => stop(), [stop]);
 
-  return { status, reading, start, stop };
+  return { status: status.value, reading: reading.value, start, stop };
 }
 
 /**

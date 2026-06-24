@@ -1,3 +1,15 @@
+import { styled } from "classname-variants/preact";
+import { Button } from "../ui/Button";
+
+const InstallDismissButton = styled(Button, {
+  base: "button-close",
+  defaultProps: {
+    intent: "ghost",
+    size: "bare",
+    type: "button",
+  },
+});
+
 interface Props {
   /** iOS has no programmatic prompt — show the manual instruction instead. */
   isIOS: boolean;
@@ -14,9 +26,9 @@ interface Props {
 export function InstallBanner({ isIOS, canInstall, onInstall, onDismiss }: Props) {
   return (
     <div class="install-banner" role="dialog" aria-label="Install Tuner">
-      <button type="button" class="install-banner-close" aria-label="Dismiss" onClick={onDismiss}>
+      <InstallDismissButton aria-label="Dismiss" onClick={onDismiss}>
         ×
-      </button>
+      </InstallDismissButton>
       <div class="install-banner-body">
         <span class="install-banner-title">All tuned 🎸</span>
         <span class="install-banner-text">
@@ -26,9 +38,9 @@ export function InstallBanner({ isIOS, canInstall, onInstall, onDismiss }: Props
         </span>
       </div>
       {canInstall && (
-        <button type="button" class="install-banner-btn" onClick={onInstall}>
+        <Button intent="primary" size="sm" onClick={onInstall}>
           Install
-        </button>
+        </Button>
       )}
     </div>
   );

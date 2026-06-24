@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useSignal } from "@preact/signals";
+import { useEffect } from "preact/hooks";
 import logoMarkUrl from "./assets/icon.svg?url&no-inline";
 import { Header } from "./components/Header";
 import { InstallBanner } from "./components/InstallBanner";
@@ -6,12 +7,11 @@ import { StringPicker } from "./components/StringPicker";
 import { TunerDisplay } from "./components/TunerDisplay";
 import { useInstallPrompt } from "./hooks/useInstallPrompt";
 import { usePitch } from "./hooks/usePitch";
+import { useTuningSession } from "./hooks/useTuningSession";
 import { useWakeLock } from "./hooks/useWakeLock";
 import { DEFAULT_INSTRUMENT, type Instrument } from "./lib/instruments";
-import { type Note, octaveFoldedCents, TargetTracker, type Tuning, tuningNotes } from "./lib/notes";
-
-const IN_TUNE_ENTER = 3; // within this many cents counts as perfectly in tune
-const IN_TUNE_LEAVE = 6; // must drift past this to drop back out (hysteresis)
+import type { Tuning } from "./lib/notes";
+import { Button } from "./ui/Button";
 
 const INSTALL_DISMISSED_KEY = "tuner:install-dismissed";
 
@@ -24,35 +24,25 @@ function readInstallDismissed(): boolean {
 }
 
 export function App() {
-  const [instrument, setInstrument] = useState<Instrument>(DEFAULT_INSTRUMENT);
-  const [tuning, setTuning] = useState<Tuning>(DEFAULT_INSTRUMENT.tunings[0]);
-  const [auto, setAuto] = useState(true);
-  const [manualIndex, setManualIndex] = useState(0);
+  const instrument = useSignal<Instrument>(DEFAULT_INSTRUMENT);
+  const tuning = useSignal<Tuning>(DEFAULT_INSTRUMENT.tunings[0]);
+  const auto = useSignal(true);
+  const manualIndex = useSignal(0);
 
-  const { status, reading, start, stop } = usePitch(instrument.range);
+  const { status, reading, start, stop } = usePitch(instrument.value.range);
   const install = useInstallPrompt();
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
-
-  const notes = useMemo(
-    () => (instrument.chromatic ? [] : tuningNotes(tuning)),
-    [instrument, tuning],
-  );
-  const inTuneRef = useRef(false);
-  const trackerRef = useRef(new TargetTracker());
-
-  // Track which strings have reached "in tune" this session; once every string
-  // has, offer to install the app (a far better moment than the cold start).
-  const tunedRef = useRef<Set<number>>(new Set());
-  const [allTuned, setAllTuned] = useState(false);
-  const [installDismissed, setInstallDismissed] = useState(readInstallDismissed);
-
-  const resetTuningProgress = () => {
-    tunedRef.current = new Set();
-    setAllTuned(false);
-  };
+  const installDismissed = useSignal(readInstallDismissed());
+  const session = useTuningSession({
+    instrument: instrument.value,
+    tuning: tuning.value,
+    reading,
+    auto: auto.value,
+    manualIndex: manualIndex.value,
+  });
 
   const dismissInstall = () => {
-    setInstallDismissed(true);
+    installDismissed.value = true;
     try {
       localStorage.setItem(INSTALL_DISMISSED_KEY, "1");
     } catch {
@@ -60,60 +50,23 @@ export function App() {
     }
   };
 
-  const hasSignal = reading.freq > 0;
-
   useEffect(() => {
     if (status !== "requesting" && status !== "listening") {
       void releaseWakeLock();
     }
   }, [status, releaseWakeLock]);
 
-  let activeIndex = auto ? -1 : manualIndex;
-  let cents: number | null = null;
-  let target: Note | null = null;
-
-  if (hasSignal) {
-    if (instrument.chromatic) {
-      const m = trackerRef.current.chromatic(reading.freq);
-      target = m.note;
-      cents = m.cents;
-    } else if (auto) {
-      const m = trackerRef.current.string(reading.freq, notes);
-      activeIndex = m.index;
-      cents = m.cents;
-      target = notes[m.index];
-    } else {
-      activeIndex = manualIndex;
-      cents = octaveFoldedCents(reading.freq, notes[manualIndex].freq);
-      target = notes[manualIndex];
-    }
-  }
-
-  const inTune =
-    cents !== null && Math.abs(cents) <= (inTuneRef.current ? IN_TUNE_LEAVE : IN_TUNE_ENTER);
-  inTuneRef.current = inTune;
-
-  useEffect(() => {
-    if (instrument.chromatic || !inTune || activeIndex < 0 || notes.length === 0) return;
-    const tuned = tunedRef.current;
-    if (tuned.has(activeIndex)) return;
-    tuned.add(activeIndex);
-    if (tuned.size >= notes.length) setAllTuned(true);
-  }, [inTune, activeIndex, instrument.chromatic, notes.length]);
-
   const onChangeInstrument = (i: Instrument) => {
-    setInstrument(i);
-    setTuning(i.tunings[0] ?? tuning);
-    setManualIndex(0);
-    trackerRef.current.reset();
-    resetTuningProgress();
+    instrument.value = i;
+    tuning.value = i.tunings[0] ?? tuning.value;
+    manualIndex.value = 0;
+    session.reset();
   };
 
   const onChangeTuning = (t: Tuning) => {
-    setTuning(t);
-    if (manualIndex >= t.strings.length) setManualIndex(0);
-    trackerRef.current.reset();
-    resetTuningProgress();
+    tuning.value = t;
+    if (manualIndex.value >= t.strings.length) manualIndex.value = 0;
+    session.reset();
   };
 
   const startTuning = () => {
@@ -140,18 +93,18 @@ export function App() {
           ) : (
             <>
               <p class="hint">A free, full-screen instrument tuner. Needs your microphone.</p>
-              <button
-                type="button"
-                class="start-btn"
+              <Button
+                intent="primary"
+                size="lg"
                 disabled={status === "requesting"}
                 onClick={startTuning}
               >
                 {status === "requesting" ? "Starting…" : "Start tuning"}
-              </button>
+              </Button>
               {install.canInstall && (
-                <button type="button" class="install-btn" onClick={install.promptInstall}>
+                <Button intent="outline" size="md" onClick={install.promptInstall}>
                   Install app
-                </button>
+                </Button>
               )}
               {!install.canInstall && install.isIOS && !install.isStandalone && (
                 <p class="install-hint">
@@ -182,30 +135,32 @@ export function App() {
   return (
     <main class="app">
       <Header
-        instrument={instrument}
+        instrument={instrument.value}
         onChangeInstrument={onChangeInstrument}
-        tuning={tuning}
+        tuning={tuning.value}
         onChangeTuning={onChangeTuning}
-        auto={auto}
+        auto={auto.value}
         onToggleAuto={() => {
-          setAuto((a) => !a);
-          trackerRef.current.reset();
+          auto.value = !auto.value;
+          session.reset();
         }}
         onStop={stopTuning}
       />
-      <TunerDisplay target={target} cents={cents} inTune={inTune} />
-      {!instrument.chromatic && (
+      <TunerDisplay target={session.target} cents={session.cents} inTune={session.inTune} />
+      {!instrument.value.chromatic && (
         <StringPicker
-          notes={notes}
-          activeIndex={activeIndex}
-          interactive={!auto}
-          inTune={inTune}
-          onSelect={setManualIndex}
+          notes={session.notes}
+          activeIndex={session.activeIndex}
+          interactive={!auto.value}
+          inTune={session.inTune}
+          onSelect={(index) => {
+            manualIndex.value = index;
+          }}
         />
       )}
-      {allTuned &&
+      {session.allTuned &&
         !install.isStandalone &&
-        !installDismissed &&
+        !installDismissed.value &&
         (install.canInstall || install.isIOS) && (
           <InstallBanner
             isIOS={install.isIOS}

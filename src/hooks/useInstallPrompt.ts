@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useSignal } from "@preact/signals";
+import { useCallback, useEffect } from "preact/hooks";
 
 /** The non-standard event Chromium fires when a PWA is installable. */
 interface BeforeInstallPromptEvent extends Event {
@@ -45,17 +46,17 @@ function detectIOS(): boolean {
  * so callers fall back to a manual "Add to Home Screen" hint.
  */
 export function useInstallPrompt(): InstallPrompt {
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isStandalone, setIsStandalone] = useState(matchStandalone);
+  const deferred = useSignal<BeforeInstallPromptEvent | null>(null);
+  const isStandalone = useSignal(matchStandalone());
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
       e.preventDefault(); // stop Chrome's own mini-infobar; we drive it ourselves
-      setDeferred(e as BeforeInstallPromptEvent);
+      deferred.value = e as BeforeInstallPromptEvent;
     };
     const onInstalled = () => {
-      setDeferred(null);
-      setIsStandalone(true);
+      deferred.value = null;
+      isStandalone.value = true;
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
@@ -66,16 +67,18 @@ export function useInstallPrompt(): InstallPrompt {
   }, []);
 
   const promptInstall = useCallback(() => {
-    if (!deferred) return;
-    deferred.prompt();
+    if (!deferred.value) return;
+    deferred.value.prompt();
     // The event can only be used once — drop it whatever the user chooses.
-    deferred.userChoice.finally(() => setDeferred(null));
+    deferred.value.userChoice.finally(() => {
+      deferred.value = null;
+    });
   }, [deferred]);
 
   return {
-    canInstall: deferred !== null && !isStandalone,
+    canInstall: deferred.value !== null && !isStandalone.value,
     isIOS: detectIOS(),
-    isStandalone,
+    isStandalone: isStandalone.value,
     promptInstall,
   };
 }
