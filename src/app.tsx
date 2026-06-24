@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import logoMarkUrl from "./assets/icon.svg?url&no-inline";
 import { Header } from "./components/Header";
 import { InstallBanner } from "./components/InstallBanner";
 import { StringPicker } from "./components/StringPicker";
 import { TunerDisplay } from "./components/TunerDisplay";
 import { useInstallPrompt } from "./hooks/useInstallPrompt";
 import { usePitch } from "./hooks/usePitch";
+import { useWakeLock } from "./hooks/useWakeLock";
 import { DEFAULT_INSTRUMENT, type Instrument } from "./lib/instruments";
 import { type Note, octaveFoldedCents, TargetTracker, type Tuning, tuningNotes } from "./lib/notes";
 
@@ -29,6 +31,7 @@ export function App() {
 
   const { status, reading, start, stop } = usePitch(instrument.range);
   const install = useInstallPrompt();
+  const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
 
   const notes = useMemo(
     () => (instrument.chromatic ? [] : tuningNotes(tuning)),
@@ -58,6 +61,12 @@ export function App() {
   };
 
   const hasSignal = reading.freq > 0;
+
+  useEffect(() => {
+    if (status !== "requesting" && status !== "listening") {
+      void releaseWakeLock();
+    }
+  }, [status, releaseWakeLock]);
 
   let activeIndex = auto ? -1 : manualIndex;
   let cents: number | null = null;
@@ -107,37 +116,51 @@ export function App() {
     resetTuningProgress();
   };
 
+  const startTuning = () => {
+    void requestWakeLock();
+    void start();
+  };
+
+  const stopTuning = () => {
+    void releaseWakeLock();
+    stop();
+  };
+
   if (status !== "listening") {
     return (
       <main class="app start">
-        <img class="logo-mark" src="/icon.svg" width="160" height="160" alt="Tuner" />
-        {status === "denied" ? (
-          <p class="hint">
-            Microphone access was blocked. Enable it in your browser settings, then reload.
-          </p>
-        ) : status === "error" ? (
-          <p class="hint">Couldn't access the microphone on this device.</p>
-        ) : (
-          <>
-            <p class="hint">A free, full-screen instrument tuner. Needs your microphone.</p>
-            <button
-              type="button"
-              class="start-btn"
-              disabled={status === "requesting"}
-              onClick={start}
-            >
-              {status === "requesting" ? "Starting…" : "Start tuning"}
-            </button>
-            {install.canInstall && (
-              <button type="button" class="install-btn" onClick={install.promptInstall}>
-                Install app
+        <div class="start-content">
+          <img class="logo-mark" src={logoMarkUrl} width="160" height="160" alt="Tuner" />
+          {status === "denied" ? (
+            <p class="hint">
+              Microphone access was blocked. Enable it in your browser settings, then reload.
+            </p>
+          ) : status === "error" ? (
+            <p class="hint">Couldn't access the microphone on this device.</p>
+          ) : (
+            <>
+              <p class="hint">A free, full-screen instrument tuner. Needs your microphone.</p>
+              <button
+                type="button"
+                class="start-btn"
+                disabled={status === "requesting"}
+                onClick={startTuning}
+              >
+                {status === "requesting" ? "Starting…" : "Start tuning"}
               </button>
-            )}
-            {!install.canInstall && install.isIOS && !install.isStandalone && (
-              <p class="install-hint">Install: tap the Share button, then “Add to Home Screen”.</p>
-            )}
-          </>
-        )}
+              {install.canInstall && (
+                <button type="button" class="install-btn" onClick={install.promptInstall}>
+                  Install app
+                </button>
+              )}
+              {!install.canInstall && install.isIOS && !install.isStandalone && (
+                <p class="install-hint">
+                  Install: tap the Share button, then “Add to Home Screen”.
+                </p>
+              )}
+            </>
+          )}
+        </div>
         <a
           class="feedback-link"
           href="https://github.com/fgnass/tuner/issues"
@@ -168,7 +191,7 @@ export function App() {
           setAuto((a) => !a);
           trackerRef.current.reset();
         }}
-        onStop={stop}
+        onStop={stopTuning}
       />
       <TunerDisplay target={target} cents={cents} inTune={inTune} />
       {!instrument.chromatic && (
