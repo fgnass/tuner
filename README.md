@@ -8,6 +8,12 @@ No app to install, no account, no network — point your microphone at the
 instrument and tune. It's a PWA, so you can add it to your home screen and use
 it offline.
 
+<p align="center">
+  <img src="./screenshots/start.png" alt="Start screen" width="280" />
+  &nbsp;&nbsp;
+  <img src="./screenshots/tuning.png" alt="Tuning a guitar's A string" width="280" />
+</p>
+
 ## Features
 
 - **Multiple instruments** — guitar, bass, and ukulele, plus a free-pitch
@@ -53,7 +59,13 @@ npm run preview  # preview the production build
 npm test         # run the unit tests (Vitest)
 npm run lint     # check formatting and lint rules (Biome)
 npm run format   # apply formatting / safe fixes
+npm run screenshot  # regenerate the README screenshots (Playwright)
 ```
+
+The screenshots above are generated, not hand-captured: `?demo` loads a staged
+tuning curve in place of the microphone (see `src/hooks/useDemoTuner.ts`), and
+`npm run screenshot` drives a headless browser to capture both screens at
+780 × 1688. Re-run it whenever the UI changes.
 
 Built with [Preact](https://preactjs.com/), [Vite](https://vite.dev/), and
 [vite-plugin-pwa](https://vite-pwa-org.netlify.app/). The microphone is accessed
