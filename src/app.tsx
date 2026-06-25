@@ -1,10 +1,11 @@
 import { useSignal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
 import logoMarkUrl from "./assets/icon.svg?url&no-inline";
 import { Header } from "./components/Header";
 import { InstallBanner } from "./components/InstallBanner";
 import { StringPicker } from "./components/StringPicker";
 import { TunerDisplay } from "./components/TunerDisplay";
+import { readDemoConfig, useDemoTuner } from "./hooks/useDemoTuner";
 import { useInstallPrompt } from "./hooks/useInstallPrompt";
 import { usePitch } from "./hooks/usePitch";
 import { useTuningSession } from "./hooks/useTuningSession";
@@ -29,7 +30,12 @@ export function App() {
   const auto = useSignal(true);
   const manualIndex = useSignal(0);
 
-  const { status, reading, start, stop } = usePitch(instrument.value.range);
+  // Demo staging (`?demo`) feeds a scripted curve in place of the microphone so
+  // screenshots capture the real UI without a live signal. See useDemoTuner.
+  const demoConfig = useMemo(readDemoConfig, []);
+  const live = usePitch(instrument.value.range);
+  const demo = useDemoTuner(demoConfig);
+  const { status, reading, start, stop } = demoConfig ? demo : live;
   const install = useInstallPrompt();
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
   const installDismissed = useSignal(readInstallDismissed());
