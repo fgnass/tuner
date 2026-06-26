@@ -9,9 +9,9 @@ instrument and tune. It's a PWA, so you can add it to your home screen and use
 it offline.
 
 <p align="center">
-  <img src="./screenshots/start.png" alt="Start screen" width="280" />
+  <img src="./public/screenshots/start.png" alt="Start screen" width="280" />
   &nbsp;&nbsp;
-  <img src="./screenshots/tuning.png" alt="Tuning a guitar's A string" width="280" />
+  <img src="./public/screenshots/tuning.png" alt="Tuning a guitar's A string" width="280" />
 </p>
 
 ## Features

@@ -4,8 +4,8 @@
  * Spins up the Vite dev server and captures the app at an iPhone-class viewport
  * scaled 2× → exactly 780 × 1688. Produces two shots:
  *
- *   screenshots/start.png    the start screen (default idle state)
- *   screenshots/tuning.png   demo-staging mode (`?demo`), which feeds a scripted
+ *   public/screenshots/start.png    the start screen (default idle state)
+ *   public/screenshots/tuning.png   demo-staging mode (`?demo`), which feeds a scripted
  *                            tuning curve instead of the microphone so the real
  *                            TunerDisplay renders without a live signal — see
  *                            src/hooks/useDemoTuner.ts
@@ -21,7 +21,7 @@ import { chromium } from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
-const outDir = resolve(root, "screenshots");
+const outDir = resolve(root, "public/screenshots");
 
 // Target output is 780 × 1688. We render at half that on a high-DPI viewport so
 // the canvas/text render crisply, then capture at the native device pixels.
