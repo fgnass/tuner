@@ -135,9 +135,7 @@ export function App() {
             </svg>
             Feedback &amp; source on GitHub
           </a>
-          <span aria-hidden="true">
-            &middot;
-          </span>
+          <span aria-hidden="true">&middot;</span>
           <a
             class="feedback-link"
             href="https://gnass.buzz/privacy/"
